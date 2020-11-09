@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 GatlingCorp (https://gatling.io)
+ * Copyright 2011-2020 GatlingCorp (https://gatling.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 
 package io.gatling
 
-import org.scalatest.{ FlatSpecLike, Matchers }
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatest.flatspec.AnyFlatSpecLike
+import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-trait BaseSpec extends FlatSpecLike with Matchers with MockitoSugar with GeneratorDrivenPropertyChecks
+trait BaseSpec extends AnyFlatSpecLike with Matchers with MockitoSugar with ScalaCheckDrivenPropertyChecks

@@ -19,20 +19,20 @@ package io.gatling.prometheus
 import java.io.IOException
 
 import io.gatling.commons.util.Clock
-import io.prometheus.client.{ Counter, Histogram }
-import io.prometheus.client.exporter.HTTPServer
 import io.gatling.core.config.GatlingConfiguration
-import io.gatling.core.stats.message.{ End, Start }
 import io.gatling.core.stats.writer._
+import io.prometheus.client.exporter.HTTPServer
+import io.prometheus.client.{Counter, Histogram}
 
 case class PrometheusData(
-    startedUsers:       Counter,
-    finishedUsers:      Counter,
-    requestLatencyHist: Histogram,
-    errorCounter:       Counter,
-    simulation:         String,
-    server:             Option[HTTPServer]
-) extends DataWriterData
+                           startedUsers: Counter,
+                           finishedUsers: Counter,
+                           requestLatencyHist: Histogram,
+                           groupRequest: Histogram,
+                           errorCounter: Counter,
+                           simulation: String,
+                           server: Option[HTTPServer]
+                         ) extends DataWriterData
 
 class PrometheusDataWriter(clock: Clock, configuration: GatlingConfiguration) extends DataWriter[PrometheusData] {
 
@@ -57,7 +57,9 @@ class PrometheusDataWriter(clock: Clock, configuration: GatlingConfiguration) ex
       finishedUsers = Counter.build.name("total_finished_users").labelNames("simulation")
         .help("Total Gatling users Finished").register,
       requestLatencyHist = Histogram.build.name("requests_latency_secondsHistogram")
-        .help("Request latency in seconds.").labelNames("simulation", "metric", "error", "responseCode", "oK").register,
+        .help("Request latency in seconds.").labelNames("simulation", "group", "metric", "error", "responseCode", "oK").register,
+      groupRequest = Histogram.build.name("groupRequestInfo")
+        .help("Metrics for group requests.").labelNames("group", "oK").register,
       errorCounter = Counter.build.name("error_msg_count")
         .help("Keeps count of each error message").labelNames("simulation", "errorMsg").register,
       simulation = init.runMessage.simulationId,
@@ -66,10 +68,12 @@ class PrometheusDataWriter(clock: Clock, configuration: GatlingConfiguration) ex
   }
 
   override def onMessage(message: LoadEventMessage, data: PrometheusData): Unit = message match {
-    case user: UserMessage         => onUserMessage(user, data)
+    case _: UserStartMessage => onUserStartMessage(data)
+    case _: UserEndMessage => onUserEndMessage(data)
+    case groupMessage: GroupMessage => onGroupMessage(groupMessage, data)
     case response: ResponseMessage => onResponseMessage(response, data)
-    case error: ErrorMessage       => onErrorMessage(error, data)
-    case _                         =>
+    case error: ErrorMessage => onErrorMessage(error, data)
+    case _ =>
   }
 
   override def onFlush(data: PrometheusData): Unit = {}
@@ -84,24 +88,33 @@ class PrometheusDataWriter(clock: Clock, configuration: GatlingConfiguration) ex
       data.server.get.stop()
   }
 
-  private def onUserMessage(user: UserMessage, data: PrometheusData): Unit = {
-    import user._
+  private def onUserStartMessage(data: PrometheusData): Unit = {
+    data.startedUsers.labels(data.simulation).inc()
+  }
 
-    event match {
-      case Start =>
-        data.startedUsers.labels(data.simulation).inc()
-      case End =>
-        data.finishedUsers.labels(data.simulation).inc()
-    }
+  private def onUserEndMessage(data: PrometheusData): Unit = {
+    data.finishedUsers.labels(data.simulation).inc()
+  }
+
+  private def onGroupMessage(groupMessage: GroupMessage, data: PrometheusData): Unit = {
+    import groupMessage._
+
+    logger.debug(s"Received Response message, ${groupHierarchy.head}")
+
+    data.groupRequest.labels(
+      groupHierarchy.head,
+      status.toString,
+    )
+      .observe((endTimestamp - startTimestamp) / 1000D)
   }
 
   private def onResponseMessage(response: ResponseMessage, data: PrometheusData): Unit = {
-    import response.{ endTimestamp, startTimestamp, name, message, responseCode, status }
+    import response._
 
-    logger.debug(s"Received Response message, ${name}")
+    logger.debug(s"Received Response message, $name")
 
     data.requestLatencyHist.labels(
-      data.simulation, name, message.getOrElse(""), responseCode.getOrElse("0"), status.toString
+      data.simulation, groupHierarchy.headOption.getOrElse(""), name, message.getOrElse(""), responseCode.getOrElse("0"), status.toString
     )
       .observe((endTimestamp - startTimestamp) / 1000D)
   }

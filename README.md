@@ -15,29 +15,28 @@ This plugin can be installed by adding the following dependency to the `gatling`
 maven example:
 ```
 <dependency>
-  <groupId>com.github.bmaguireibm</groupId>
-  <artifactId>prometheusplugin_2.12</artifactId>
+  <groupId>com.github.vitalii-barabash</groupId>
+  <artifactId>gatling34x-prometheus-plugin_2.12</artifactId>
   <version>0.0.1</version>
 </dependency>
 ```
 gradle example, working with [Gatling Gradle Plugin](https://github.com/lkishalmi/gradle-gatling-plugin):
 
 ```
+plugins {
+    id 'io.gatling.gradle' version '3.4.1'
+}
+
+...
+
 dependencies {
-    compileOnly group: 'org.scala-lang', name: 'scala-library', version: "2.12.6"
-    compileOnly group: 'io.gatling', name: 'gatling-app', version: "3.0.3"
-    gatling group: 'com.github.bmaguireibm', name: 'prometheusplugin_2.12', version: '0.0.1'
+        gatling "com.github.vitalii-barabash:gatling34x-prometheus-plugin_2.12:0.0.1"
 }
 ```
 
 ### Direct Download
 
-If you are using the direct binary download from [gatling.io here](https://gatling.io/download/), you can add the plugin by down loading the [release zip](https://github.com/bmaguireibm/gatling-prometheus-datawriter/releases/tag/3.0.3_0.0.1-beta) and copying the `plugins` dir into `gatling-charts-highcharts-bundle-3.0.3/` and replacing `gatling.sh` or `gatling.bat` in `gatling-charts-highcharts-bundle-3.0.3/bin/` with the corresponding files in the release zip.
-
-The altered .sh and .bat files simply add the `plugins` dir to the classpath ahead of the original gatling classes.
-
-`GATLING_CLASSPATH="$GATLING_HOME/plugins/*:$GATLING_HOME/lib/*:$GATLING_HOME/user-files:$GATLING_CONF:"`
-
+WIP
 
 ## Configuration
 
@@ -53,7 +52,7 @@ You can additionally specify a different port for the metrics to be available at
   }
 
   prometheus {
-    port = "9102"  # Port for Prometheus DB to query, must be available.
+    port = 9102  # Port for Prometheus DB to query, must be available.
   }
 ```
 

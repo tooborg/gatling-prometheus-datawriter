@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 GatlingCorp (https://gatling.io)
+ * Copyright 2011-2020 GatlingCorp (https://gatling.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,20 @@ package io.gatling.core.stats.writer
 
 object DataWriterType {
 
-  private val AllTypes = Seq(ConsoleDataWriterType, FileDataWriterType, GraphiteDataWriterType, LeakReporterDataWriterType, PrometheusDataWriterType)
-    .map(t => t.name -> t).toMap
+  private val AllTypes = Seq(Console, File, Graphite, Prometheus)
+    .map(t => t.name -> t)
+    .toMap
 
   def findByName(name: String): Option[DataWriterType] = AllTypes.get(name)
+
+  object Console extends DataWriterType("console")
+
+  object File extends DataWriterType("file")
+
+  object Graphite extends DataWriterType("graphite")
+
+  object Prometheus extends DataWriterType("prometheus")
+
 }
 
-sealed abstract class DataWriterType(val name: String, val className: String)
-object ConsoleDataWriterType extends DataWriterType("console", "io.gatling.core.stats.writer.ConsoleDataWriter")
-object FileDataWriterType extends DataWriterType("file", "io.gatling.core.stats.writer.LogFileDataWriter")
-object GraphiteDataWriterType extends DataWriterType("graphite", "io.gatling.graphite.GraphiteDataWriter")
-object LeakReporterDataWriterType extends DataWriterType("leak", "io.gatling.core.stats.writer.LeakReporterDataWriter")
-object PrometheusDataWriterType extends DataWriterType("prometheus", "io.gatling.prometheus.PrometheusDataWriter")
+sealed abstract class DataWriterType(val name: String)
