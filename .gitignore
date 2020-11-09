@@ -42,7 +42,6 @@ highstock.js
 theme.js
 
 #Generated and copied config files
-gatling.conf
 recorder.conf
 gatling-akka.conf
 logback.xml

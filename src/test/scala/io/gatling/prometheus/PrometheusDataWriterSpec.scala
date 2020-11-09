@@ -20,10 +20,9 @@ import akka.testkit.TestFSMRef
 import com.typesafe.scalalogging.LazyLogging
 import io.gatling.AkkaSpec
 import io.gatling.commons.stats.Status
-import io.gatling.commons.util.DefaultClock
-import io.gatling.core.config.GatlingConfiguration
-import io.gatling.core.stats.writer.{ Init, ResponseMessage, RunMessage, ShortScenarioDescription }
 import io.gatling.commons.stats.assertion.Assertion
+import io.gatling.core.config.GatlingConfiguration
+import io.gatling.core.stats.writer.{Init, ResponseMessage, RunMessage, ShortScenarioDescription}
 
 import scala.collection.mutable
 
@@ -32,22 +31,21 @@ class PrometheusDataWriterSpec extends AkkaSpec with LazyLogging {
   @throws(classOf[java.io.IOException])
   @throws(classOf[java.net.SocketTimeoutException])
   def get(
-    url:            String,
-    connectTimeout: Int    = 5000,
-    readTimeout:    Int    = 5000,
-    requestMethod:  String = "GET"
-  ): String =
-    {
-      import java.net.{ URL, HttpURLConnection }
-      val connection = new URL(url).openConnection.asInstanceOf[HttpURLConnection]
-      connection.setConnectTimeout(connectTimeout)
-      connection.setReadTimeout(readTimeout)
-      connection.setRequestMethod(requestMethod)
-      val inputStream = connection.getInputStream
-      val content = scala.io.Source.fromInputStream(inputStream).mkString
-      if (inputStream != null) inputStream.close()
-      content
-    }
+           url: String,
+           connectTimeout: Int = 5000,
+           readTimeout: Int = 5000,
+           requestMethod: String = "GET"
+         ): String = {
+    import java.net.{HttpURLConnection, URL}
+    val connection = new URL(url).openConnection.asInstanceOf[HttpURLConnection]
+    connection.setConnectTimeout(connectTimeout)
+    connection.setReadTimeout(readTimeout)
+    connection.setRequestMethod(requestMethod)
+    val inputStream = connection.getInputStream
+    val content = scala.io.Source.fromInputStream(inputStream).mkString
+    if (inputStream != null) inputStream.close()
+    content
+  }
 
   "PrometheusDataWriter" should "initialize without error and serve endpoint" in {
     // Picks any open port
@@ -56,7 +54,7 @@ class PrometheusDataWriterSpec extends AkkaSpec with LazyLogging {
       mutable.Map("gatling.data.prometheus.port" -> port)
     )
 
-    val prometheusDataWriter = TestFSMRef(new PrometheusDataWriter(new DefaultClock, configuration))
+    val prometheusDataWriter = TestFSMRef(new PrometheusDataWriter(configuration))
 
     prometheusDataWriter.stateName.getClass.getName shouldBe "io.gatling.core.stats.writer.Uninitialized$"
 
@@ -70,7 +68,7 @@ class PrometheusDataWriterSpec extends AkkaSpec with LazyLogging {
     port = prometheusDataWriter.stateData.asInstanceOf[PrometheusData].server.get.getPort
 
     prometheusDataWriter ! ResponseMessage(
-      "test scenario", 1, List.empty[String], "testName", 100, 200, Status("OK"), Option("200"), None
+      "test scenario", List.empty[String], "testName", 100, 200, Status("OK"), Option("200"), None
     )
 
     // Wait one second for the server to start up and message be processed.
@@ -83,7 +81,7 @@ class PrometheusDataWriterSpec extends AkkaSpec with LazyLogging {
     val requestCountRegex = "requests_latency_secondsHistogram_count\\{[^}]+\\} ([0-9.]+)".r.unanchored
     request match {
       case requestCountRegex(count) => reqCount = count.toFloat
-      case _                        => logger.warn("Request count not found")
+      case _ => logger.warn("Request count not found")
     }
     reqCount shouldBe 1.0
   }
