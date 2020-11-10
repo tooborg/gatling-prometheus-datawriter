@@ -14,10 +14,19 @@ This plugin can be installed by adding the following dependency to the `gatling`
 
 maven example:
 ```
+<repositories>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+</repositories>
+
+...
+
 <dependency>
-  <groupId>com.github.vitalii-barabash</groupId>
-  <artifactId>gatling34x-prometheus-plugin_2.12</artifactId>
-  <version>0.0.1</version>
+    <groupId>com.github.vitalii-barabash</groupId>
+    <artifactId>gatling-prometheus-datawriter</artifactId>
+    <version>3.4.1_0.0.1-beta</version>
 </dependency>
 ```
 gradle example, working with [Gatling Gradle Plugin](https://github.com/lkishalmi/gradle-gatling-plugin):
@@ -27,16 +36,25 @@ plugins {
     id 'io.gatling.gradle' version '3.4.1'
 }
 
+repositories {
+    maven { url "https://jitpack.io" }
+}
+
 ...
 
 dependencies {
-        gatling "com.github.vitalii-barabash:gatling34x-prometheus-plugin_2.12:0.0.1"
+    gatling "com.github.vitalii-barabash:gatling-prometheus-datawriter:3.4.1_0.0.1-beta"
 }
 ```
 
 ### Direct Download
 
-WIP
+If you are using the direct binary download from [gatling.io](https://gatling.io/download/), you can add the plugin by downloading the [release files](https://github.com/vitalii-barabash/gatling-prometheus-datawriter/releases/tag/3.4.1_0.0.1-beta) and copying the `config/gatling/plugins` dir into `gatling-charts-highcharts-bundle-3.4.1/` and replacing `config/gatling/bin/gatling.sh` or `config/gatling/bin/gatling.bat` in `gatling-charts-highcharts-bundle-3.4.1/bin/` with the corresponding files in the release attachments.
+
+The altered .sh and .bat files simply add the `plugins` dir to the classpath ahead of the original gatling classes.
+
+`GATLING_CLASSPATH="$GATLING_HOME/plugins/*:$GATLING_HOME/lib/*:$GATLING_HOME/user-files:$GATLING_CONF:"`
+
 
 ## Configuration
 
@@ -131,3 +149,14 @@ See [Prometheus Kubernetes configuration](https://prometheus.io/docs/prometheus/
       prometheus.io/path: "/metrics"
 ```
 
+#### Demo
+
+The project contains an example of the computer database simulation with the pre-configured grafana dashboard to represent metrics visualisation.
+
+`docker-compose up`
+
+http://localhost:3000 Grafana
+
+http://localhost:9090 Prometheus UI
+
+http://localhost:9102 Gatling Prometheus plugin metrics
